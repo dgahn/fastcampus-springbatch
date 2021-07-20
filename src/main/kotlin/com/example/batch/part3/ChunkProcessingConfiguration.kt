@@ -2,7 +2,9 @@ package com.example.batch.part3
 
 import mu.KotlinLogging
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
+import org.springframework.batch.core.configuration.annotation.JobScope
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory
+import org.springframework.batch.core.configuration.annotation.StepScope
 import org.springframework.batch.core.launch.support.RunIdIncrementer
 import org.springframework.batch.core.step.tasklet.Tasklet
 import org.springframework.batch.item.ItemProcessor
@@ -10,6 +12,7 @@ import org.springframework.batch.item.ItemReader
 import org.springframework.batch.item.ItemWriter
 import org.springframework.batch.item.support.ListItemReader
 import org.springframework.batch.repeat.RepeatStatus
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
@@ -33,17 +36,19 @@ class ChunkProcessingConfiguration(
         .tasklet(tasklet())
         .build()
 
-    private fun tasklet(): Tasklet {
+    @Bean
+    @StepScope
+    fun tasklet(@Value("#{jobParameters[chunkSize]}") value: String? = null): Tasklet {
         val items = getItems()
 
         return Tasklet { contribution, chunkContext ->
             val stepExecution = contribution.stepExecution
 
-            val chunkSize = 10
             val fromIndex = stepExecution.readCount
+            val chunkSize = value?.toInt() ?: 10
             val toIndex = fromIndex + chunkSize
 
-            if(fromIndex >= items.size) {
+            if (fromIndex >= items.size) {
                 RepeatStatus.FINISHED
             } else {
                 val subList = items.subList(fromIndex, toIndex)
@@ -66,8 +71,9 @@ class ChunkProcessingConfiguration(
     }
 
     @Bean
-    fun chunkBaseStep() = stepBuilderFactory.get("chunkBaseStep")
-        .chunk<String, String>(10)
+    @JobScope
+    fun chunkBaseStep(@Value("#{jobParameters[chunkSize]}") chunkSize: String? = null) = stepBuilderFactory.get("chunkBaseStep")
+        .chunk<String, String>(chunkSize?.toInt() ?: 10)
         .reader(itemReader())
         .processor(itemProcessor())
         .writer(itemWriter())
