@@ -7,6 +7,7 @@ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory
 import org.springframework.batch.core.launch.support.RunIdIncrementer
 import org.springframework.batch.item.ItemWriter
+import org.springframework.batch.item.database.builder.JdbcCursorItemReaderBuilder
 import org.springframework.batch.item.file.FlatFileItemReader
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder
 import org.springframework.batch.item.file.mapping.DefaultLineMapper
@@ -14,13 +15,15 @@ import org.springframework.batch.item.file.transform.DelimitedLineTokenizer
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.io.ClassPathResource
+import javax.sql.DataSource
 
 private val logger = KotlinLogging.logger { }
 
 @Configuration
 class ItemReaderConfiguration(
     private val jobBuilderFactory: JobBuilderFactory,
-    private val stepBuilderFactory: StepBuilderFactory
+    private val stepBuilderFactory: StepBuilderFactory,
+    private val dataSource: DataSource
 ) {
 
     @Bean
@@ -28,6 +31,7 @@ class ItemReaderConfiguration(
         .incrementer(RunIdIncrementer())
         .start(customItemReaderStep())
         .next(csvFileStep())
+        .next(jdbcStep())
         .build()
 
     @Bean
@@ -43,6 +47,29 @@ class ItemReaderConfiguration(
         .reader(csvFileItemReader())
         .writer(itemWriter())
         .build()
+
+    @Bean
+    fun jdbcStep() = stepBuilderFactory.get("jdbcStep")
+        .chunk<Person, Person>(10)
+        .reader(jdbcCursorItemReader())
+        .writer(itemWriter())
+        .build()
+
+    private fun jdbcCursorItemReader() = JdbcCursorItemReaderBuilder<Person>()
+        .name("jdbcCursorItemReader")
+        .dataSource(dataSource)
+        .sql("SELECT id, name, age, address FROM person")
+        .rowMapper { rs, rowNum ->
+            Person(
+                rs.getInt(1),
+                rs.getString(2),
+                rs.getString(3),
+                rs.getString(4)
+            )
+        }
+        .build().apply {
+            this.afterPropertiesSet()
+        }
 
     private fun csvFileItemReader(): FlatFileItemReader<Person> {
         val lineMapper = DefaultLineMapper<Person>()
