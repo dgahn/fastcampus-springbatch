@@ -3,9 +3,13 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     id("org.springframework.boot") version "2.5.2"
     id("io.spring.dependency-management") version "1.0.11.RELEASE"
+
     kotlin("jvm") version "1.5.20"
     kotlin("plugin.spring") version "1.5.20"
     kotlin("plugin.jpa") version "1.5.20"
+
+    kotlin("plugin.noarg") version "1.5.20"
+    kotlin("plugin.allopen") version "1.5.20"
 }
 
 group = "com.example"
@@ -26,6 +30,7 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.batch:spring-batch-test")
+    implementation("io.github.microutils:kotlin-logging:2.0.10")
 }
 
 tasks.withType<KotlinCompile> {

@@ -1,4 +1,12 @@
 spring:
+  datasource:
+    hikari:
+      jdbc-url: jdbc:postgresql://localhost:5432/spring_batch
+      driver-class-name: org.postgresql.Driver
+      username: postgres
+      password: postgres
   batch:
+    jdbc:
+      initialize-schema: never
     job:
       names: ${job.name:NONE}
