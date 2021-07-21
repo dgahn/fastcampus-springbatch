@@ -9,26 +9,30 @@ import org.springframework.batch.item.ItemReader
 import org.springframework.batch.item.ItemWriter
 import org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider
 import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder
+import org.springframework.batch.item.database.builder.JpaItemWriterBuilder
 import org.springframework.batch.item.file.builder.FlatFileItemWriterBuilder
 import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor
 import org.springframework.batch.item.file.transform.DelimitedLineAggregator
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.io.FileSystemResource
+import javax.persistence.EntityManagerFactory
 import javax.sql.DataSource
 
 @Configuration
 class ItemWriterConfiguration(
     private val jobBuilderFactory: JobBuilderFactory,
     private val stepBuilderFactory: StepBuilderFactory,
-    private val dataSource: DataSource
+    private val dataSource: DataSource,
+    private val entityManagerFactory: EntityManagerFactory
 ) {
 
     @Bean
     fun itemWriterJob(): Job = jobBuilderFactory.get("itemWriterJob")
         .incrementer(RunIdIncrementer())
         .start(itemWriterStep())
-        .next(jdbcBatchItemWriterStep())
+//        .next(jdbcBatchItemWriterStep())
+        .next(jpaItemWriterStep())
         .build()
 
     @Bean
@@ -42,8 +46,21 @@ class ItemWriterConfiguration(
     fun jdbcBatchItemWriterStep() = stepBuilderFactory.get("jdbcBatchItemWriterStep")
         .chunk<Person, Person>(10)
         .reader(itemReader())
-        .writer(jdbcBatchItemWriter())
+        .writer(jpaItemWriter())
         .build()
+
+    @Bean
+    fun jpaItemWriterStep() = stepBuilderFactory.get("jpaItemWriterStep")
+        .chunk<Person, Person>(10)
+        .reader(itemReader())
+        .writer(jpaItemWriter())
+        .build()
+
+    private fun jpaItemWriter() = JpaItemWriterBuilder<Person>()
+        .entityManagerFactory(entityManagerFactory)
+//        .usePersist(true) // jpa에서 merge()가 아니라 persist()가 실행하도록 한다. ID를 할당하지 않으면 persist()를 사용한다.
+        .build()
+        .apply { this.afterPropertiesSet() }
 
     private fun jdbcBatchItemWriter(): ItemWriter<Person> = JdbcBatchItemWriterBuilder<Person>()
         .dataSource(dataSource)
@@ -77,7 +94,7 @@ class ItemWriterConfiguration(
     private fun getItems(): MutableList<Person> {
         val items = mutableListOf<Person>()
         for (i in 1..100) {
-            items.add(Person(i, "test name $i", "test age", "test address"))
+            items.add(Person(name = "test name $i", age = "test age", address = "test address"))
         }
         return items
     }
