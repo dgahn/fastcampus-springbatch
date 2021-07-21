@@ -10,3 +10,6 @@ spring:
       initialize-schema: never
     job:
       names: ${job.name:NONE}
+  jpa:
+    hibernate:
+      ddl-auto: update

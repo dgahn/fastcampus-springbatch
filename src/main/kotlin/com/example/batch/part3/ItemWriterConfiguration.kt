@@ -7,23 +7,28 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.core.launch.support.RunIdIncrementer
 import org.springframework.batch.item.ItemReader
 import org.springframework.batch.item.ItemWriter
+import org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider
+import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder
 import org.springframework.batch.item.file.builder.FlatFileItemWriterBuilder
 import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor
 import org.springframework.batch.item.file.transform.DelimitedLineAggregator
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.io.FileSystemResource
+import javax.sql.DataSource
 
 @Configuration
 class ItemWriterConfiguration(
     private val jobBuilderFactory: JobBuilderFactory,
-    private val stepBuilderFactory: StepBuilderFactory
+    private val stepBuilderFactory: StepBuilderFactory,
+    private val dataSource: DataSource
 ) {
 
     @Bean
     fun itemWriterJob(): Job = jobBuilderFactory.get("itemWriterJob")
         .incrementer(RunIdIncrementer())
         .start(itemWriterStep())
+        .next(jdbcBatchItemWriterStep())
         .build()
 
     @Bean
@@ -32,6 +37,20 @@ class ItemWriterConfiguration(
         .reader(itemReader())
         .writer(csvFileItemWriter())
         .build()
+
+    @Bean
+    fun jdbcBatchItemWriterStep() = stepBuilderFactory.get("jdbcBatchItemWriterStep")
+        .chunk<Person, Person>(10)
+        .reader(itemReader())
+        .writer(jdbcBatchItemWriter())
+        .build()
+
+    private fun jdbcBatchItemWriter(): ItemWriter<Person> = JdbcBatchItemWriterBuilder<Person>()
+        .dataSource(dataSource)
+        .itemSqlParameterSourceProvider(BeanPropertyItemSqlParameterSourceProvider())
+        .sql("insert into person(name, age, address) values (:name, :age, :address)")
+        .build()
+        .apply { this.afterPropertiesSet() }
 
     private fun csvFileItemWriter(): ItemWriter<in Person> {
         val fieldExtractor = BeanWrapperFieldExtractor<Person>()
