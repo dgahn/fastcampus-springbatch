@@ -8,6 +8,7 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.core.launch.support.RunIdIncrementer
 import org.springframework.batch.item.ItemWriter
 import org.springframework.batch.item.database.builder.JdbcCursorItemReaderBuilder
+import org.springframework.batch.item.database.builder.JpaCursorItemReaderBuilder
 import org.springframework.batch.item.file.FlatFileItemReader
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder
 import org.springframework.batch.item.file.mapping.DefaultLineMapper
@@ -15,6 +16,7 @@ import org.springframework.batch.item.file.transform.DelimitedLineTokenizer
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.io.ClassPathResource
+import javax.persistence.EntityManagerFactory
 import javax.sql.DataSource
 
 private val logger = KotlinLogging.logger { }
@@ -23,7 +25,8 @@ private val logger = KotlinLogging.logger { }
 class ItemReaderConfiguration(
     private val jobBuilderFactory: JobBuilderFactory,
     private val stepBuilderFactory: StepBuilderFactory,
-    private val dataSource: DataSource
+    private val dataSource: DataSource,
+    private val entityManagerFactory: EntityManagerFactory
 ) {
 
     @Bean
@@ -32,6 +35,7 @@ class ItemReaderConfiguration(
         .start(customItemReaderStep())
         .next(csvFileStep())
         .next(jdbcStep())
+        .next(jpaStep())
         .build()
 
     @Bean
@@ -54,6 +58,21 @@ class ItemReaderConfiguration(
         .reader(jdbcCursorItemReader())
         .writer(itemWriter())
         .build()
+
+    @Bean
+    fun jpaStep() = stepBuilderFactory.get("jpaStep")
+        .chunk<Person, Person>(10)
+        .reader(jpaCursorItemReader())
+        .writer(itemWriter())
+        .build()
+
+    private fun jpaCursorItemReader() = JpaCursorItemReaderBuilder<Person>()
+        .name("jpaCursorItemReader")
+        .entityManagerFactory(entityManagerFactory)
+        .queryString("SELECT p FROM Person p")
+        .build().apply {
+            this.afterPropertiesSet()
+        }
 
     private fun jdbcCursorItemReader() = JdbcCursorItemReaderBuilder<Person>()
         .name("jdbcCursorItemReader")
