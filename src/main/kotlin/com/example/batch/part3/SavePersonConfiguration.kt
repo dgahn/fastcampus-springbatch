@@ -33,6 +33,8 @@ class SavePersonConfiguration(
     fun savePersonJob(): Job = jobBuilderFactory.get("savePersonJob")
         .incrementer(RunIdIncrementer())
         .start(savePersonStep(null))
+        .listener(SavePersonJobExecutionListener())
+        .listener(SavePersonAnnotationJobExecutionListener())
         .build()
 
     @Bean
@@ -43,6 +45,7 @@ class SavePersonConfiguration(
             .reader(itemReader())
             .processor(DuplicateValidationProcessor(Person::name, allowDuplicate.toBoolean()))
             .writer(itemWriter())
+            .listener(SavePersonStepExecutionListener())
             .build()
 
     private fun itemWriter(): ItemWriter<in Person> {

@@ -26,11 +26,11 @@ class SavePersonConfigurationFunTest(
         personRepository.deleteAll()
     }
 
-    test("step에 대해서 테스트를 진행할 수 있다.") {
-        val launchStep = jobLauncherTestUtils.launchStep("savePersonStep")
-
-        launchStep.stepExecutions.sumOf { it.writeCount } shouldBe 3
-    }
+//    test("step에 대해서 테스트를 진행할 수 있다.") {
+//        val launchStep = jobLauncherTestUtils.launchStep("savePersonStep")
+//
+//        launchStep.stepExecutions.sumOf { it.writeCount } shouldBe 3
+//    }
 
     test("이름 중복을 허락하지 않으면 Person을 3명 저장한다") {
         val jobParameters = JobParametersBuilder()
