@@ -7,12 +7,14 @@ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.JobScope
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory
 import org.springframework.batch.core.launch.support.RunIdIncrementer
+import org.springframework.batch.item.ItemProcessor
 import org.springframework.batch.item.ItemReader
 import org.springframework.batch.item.ItemWriter
 import org.springframework.batch.item.database.builder.JpaItemWriterBuilder
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder
 import org.springframework.batch.item.file.mapping.DefaultLineMapper
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer
+import org.springframework.batch.item.support.builder.CompositeItemProcessorBuilder
 import org.springframework.batch.item.support.builder.CompositeItemWriterBuilder
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -43,10 +45,29 @@ class SavePersonConfiguration(
         stepBuilderFactory.get("savePersonStep")
             .chunk<Person, Person>(10)
             .reader(itemReader())
-            .processor(DuplicateValidationProcessor(Person::name, allowDuplicate.toBoolean()))
+            .processor(itemProcessor(allowDuplicate))
             .writer(itemWriter())
             .listener(SavePersonStepExecutionListener())
+            .faultTolerant()
+            .skip(NotFoundNameException::class.java)
+            .skipLimit(2)
             .build()
+
+    private fun itemProcessor(allowDuplicate: String?): ItemProcessor<Person, Person> {
+        val duplicateValidationProcessor = DuplicateValidationProcessor(Person::name, allowDuplicate.toBoolean())
+        val validationProcessor = ItemProcessor<Person, Person> { item ->
+            if (item.isNotEmptyName()) {
+                item
+            } else {
+                throw NotFoundNameException()
+            }
+        }
+
+        return CompositeItemProcessorBuilder<Person, Person>()
+            .delegates(validationProcessor, duplicateValidationProcessor)
+            .build()
+            .apply { afterPropertiesSet() }
+    }
 
     private fun itemWriter(): ItemWriter<in Person> {
         val jpaItemWriter = JpaItemWriterBuilder<Person>()

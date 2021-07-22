@@ -13,4 +13,6 @@ class Person(
     val name: String,
     val age: String,
     val address: String
-)
+) {
+    fun isNotEmptyName(): Boolean = name.isNotBlank()
+}
