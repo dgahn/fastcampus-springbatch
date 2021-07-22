@@ -51,6 +51,7 @@ class SavePersonConfiguration(
             .faultTolerant()
             .skip(NotFoundNameException::class.java)
             .skipLimit(2)
+            .retry(NotFoundNameException::class.java)
             .build()
 
     private fun itemProcessor(allowDuplicate: String?): ItemProcessor<Person, Person> {
@@ -64,7 +65,7 @@ class SavePersonConfiguration(
         }
 
         return CompositeItemProcessorBuilder<Person, Person>()
-            .delegates(validationProcessor, duplicateValidationProcessor)
+            .delegates(PersonValidationRetryProcessor(), validationProcessor, duplicateValidationProcessor)
             .build()
             .apply { afterPropertiesSet() }
     }

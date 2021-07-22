@@ -9,6 +9,9 @@ import org.springframework.batch.core.annotation.AfterJob
 import org.springframework.batch.core.annotation.AfterStep
 import org.springframework.batch.core.annotation.BeforeJob
 import org.springframework.batch.core.annotation.BeforeStep
+import org.springframework.retry.RetryCallback
+import org.springframework.retry.RetryContext
+import org.springframework.retry.RetryListener
 
 private val logger = KotlinLogging.logger { }
 
@@ -49,9 +52,29 @@ class SavePersonStepExecutionListener {
     @AfterStep
     fun afterStep(stepExecution: StepExecution): ExitStatus {
         logger.info { "afterStep : ${stepExecution.writeCount}" }
-        if(stepExecution.writeCount == 0) {
+        if (stepExecution.writeCount == 0) {
             return ExitStatus.FAILED
         }
         return stepExecution.exitStatus
+    }
+}
+
+class SavePersonRetryListener : RetryListener {
+    override fun <T : Any?, E : Throwable?> open(context: RetryContext?, callback: RetryCallback<T, E>?): Boolean = true
+
+    override fun <T : Any?, E : Throwable?> close(
+        context: RetryContext?,
+        callback: RetryCallback<T, E>?,
+        throwable: Throwable?
+    ) {
+        logger.info { "close" }
+    }
+
+    override fun <T : Any?, E : Throwable?> onError(
+        context: RetryContext?,
+        callback: RetryCallback<T, E>?,
+        throwable: Throwable?
+    ) {
+        logger.info { "onError" }
     }
 }
