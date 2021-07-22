@@ -17,7 +17,7 @@ private val logger = KotlinLogging.logger { }
 @Configuration
 class ItemProcessorConfiguration(
     private val jobBuilderFactory: JobBuilderFactory,
-    private val stepBuilderFactory: StepBuilderFactory
+    private val stepBuilderFactory: StepBuilderFactory,
 ) {
 
     @Bean
