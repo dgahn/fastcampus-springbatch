@@ -25,6 +25,7 @@ class AccountConfiguration(
         .incrementer(RunIdIncrementer())
         .start(saveUserStep())
         .next(userLevelUpStep())
+        .listener(LevelUpJobExecutionListener(accountRepo))
         .build()
 
     @Bean
