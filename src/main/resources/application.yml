@@ -8,8 +8,8 @@ spring:
   batch:
     jdbc:
       initialize-schema: never
-    job:
-      names: ${job.name:NONE}
+#    job:
+#      names: ${job.name:NONE}
   jpa:
     hibernate:
       ddl-auto: update

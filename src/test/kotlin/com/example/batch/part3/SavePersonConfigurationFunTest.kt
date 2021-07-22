@@ -20,7 +20,6 @@ class SavePersonConfigurationFunTest(
     private val jobLauncherTestUtils: JobLauncherTestUtils,
     private val personRepository: PersonRepository
 ): FunSpec({
-    extension(SpringExtension)
 
     afterEach {
         personRepository.deleteAll()
