@@ -30,6 +30,9 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.batch:spring-batch-test")
+    testImplementation("io.kotest:kotest-assertions-core:4.6.1")
+    testImplementation("io.kotest:kotest-extensions-spring:4.4.3")
+    testImplementation("io.kotest:kotest-runner-junit5:4.6.1")
     implementation("io.github.microutils:kotlin-logging:2.0.10")
 }
 
