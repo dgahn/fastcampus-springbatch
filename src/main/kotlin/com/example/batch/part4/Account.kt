@@ -15,11 +15,16 @@ class Account(
     @Enumerated(EnumType.STRING)
     var level: Level = Level.NORMAL,
 
-    val totalAmount: Int,
+    @OneToMany(cascade = [CascadeType.PERSIST])
+    @JoinColumn(name = "account_id")
+    val orders: List<Orders>? = null,
 
     var updatedDate: LocalDate? = null
 ) {
-    fun availableLevelUp(): Boolean  = level.availableLevelUp(totalAmount)
+    private val totalAmount: Int
+        get() = orders!!.sumOf { it.amount }
+
+    fun availableLevelUp(): Boolean = level.availableLevelUp(totalAmount)
 
     fun levelUp(): Level {
         val nextLevel = level.getNexLevel(totalAmount)
@@ -37,7 +42,7 @@ class Account(
         NORMAL(200_000, SILVER);
 
         fun availableLevelUp(totalAmount: Int): Boolean {
-            if(this.nextLevel == null) {
+            if (this.nextLevel == null) {
                 return false
             }
 
@@ -45,19 +50,19 @@ class Account(
         }
 
         fun getNexLevel(totalAmount: Int): Level {
-            if(totalAmount >= VIP.nextAmount) {
+            if (totalAmount >= VIP.nextAmount) {
                 return VIP
             }
 
-            if(totalAmount >= GOLD.nextAmount) {
+            if (totalAmount >= GOLD.nextAmount) {
                 return GOLD.nextLevel!!
             }
 
-            if(totalAmount >= SILVER.nextAmount) {
+            if (totalAmount >= SILVER.nextAmount) {
                 return SILVER.nextLevel!!
             }
 
-            if(totalAmount >= NORMAL.nextAmount) {
+            if (totalAmount >= NORMAL.nextAmount) {
                 return NORMAL.nextLevel!!
             }
 

@@ -22,7 +22,13 @@ class SaveAccountTasklet(
             users.add(
                 Account(
                     username = "test username $i",
-                    totalAmount = 1_000
+                    orders = listOf(
+                        Orders(
+                            amount = 10_000,
+                            createdDate = LocalDate.of(2020, 11, 1),
+                            itemName = "item $i"
+                        )
+                    )
                 )
             )
         }
@@ -31,7 +37,13 @@ class SaveAccountTasklet(
             users.add(
                 Account(
                     username = "test username $i",
-                    totalAmount = 200_000
+                    orders = listOf(
+                        Orders(
+                            amount = 200_000,
+                            createdDate = LocalDate.of(2020, 11, 2),
+                            itemName = "item $i"
+                        )
+                    )
                 )
             )
         }
@@ -40,7 +52,13 @@ class SaveAccountTasklet(
             users.add(
                 Account(
                     username = "test username $i",
-                    totalAmount = 300_000
+                    orders = listOf(
+                        Orders(
+                            amount = 300_000,
+                            createdDate = LocalDate.of(2020, 11, 3),
+                            itemName = "item $i"
+                        )
+                    )
                 )
             )
         }
@@ -49,7 +67,13 @@ class SaveAccountTasklet(
             users.add(
                 Account(
                     username = "test username $i",
-                    totalAmount = 500_000
+                    orders = listOf(
+                        Orders(
+                            amount = 500_000,
+                            createdDate = LocalDate.of(2020, 11, 4),
+                            itemName = "item $i"
+                        )
+                    )
                 )
             )
         }
